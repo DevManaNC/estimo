@@ -42,11 +42,11 @@ export default function FinancementTab({ current, calc, fin, cashFlow, updateInf
         <div style={si.row}>
           <div style={{ flex: 1 }}>
             <div style={si.label}>Apport (%)</div>
-            <input type="number" style={si.input} value={info.apport || ""} onChange={e => updateInfo("apport", +e.target.value || 0)} placeholder="20" />
+            <input type="text" inputMode="decimal" style={si.input} value={info.apport || ""} onChange={e => updateInfo("apport", +e.target.value || 0)} placeholder="20" />
           </div>
           <div style={{ flex: 1 }}>
             <div style={si.label}>Taux annuel (%)</div>
-            <input type="number" step="0.1" style={si.input} value={info.tauxCredit || ""} onChange={e => updateInfo("tauxCredit", +e.target.value || 0)} placeholder="3.5" />
+            <input type="text" inputMode="decimal" step="0.1" style={si.input} value={info.tauxCredit || ""} onChange={e => updateInfo("tauxCredit", +e.target.value || 0)} placeholder="3.5" />
           </div>
           <div style={{ flex: 1 }}>
             <div style={si.label}>Durée (ans)</div>

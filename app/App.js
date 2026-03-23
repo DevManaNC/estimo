@@ -40,18 +40,25 @@ export default function App() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const saveTimer = useRef(null);
 
+  const persistRef = useRef(null);
   const persist = useCallback((np) => {
     setProjects(np);
     setSaving(true);
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => { saveProjects(np); setSaving(false); }, 400);
+    if (persistRef.current) clearTimeout(persistRef.current);
+    persistRef.current = setTimeout(() => { saveProjects(np); setSaving(false); }, 400);
   }, []);
 
   const current = projects.find(p => p.id === currentId);
 
   const updateProject = useCallback((fn) => {
-    persist(projects.map(p => p.id === currentId ? { ...fn(p), updatedAt: new Date().toISOString() } : p));
-  }, [projects, currentId, persist]);
+    setProjects(prev => {
+      const np = prev.map(p => p.id === currentId ? { ...fn(p), updatedAt: new Date().toISOString() } : p);
+      setSaving(true);
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => { saveProjects(np); setSaving(false); }, 400);
+      return np;
+    });
+  }, [currentId]);
 
   const updateInfo = (k, v) => updateProject(p => ({ ...p, info: { ...p.info, [k]: v } }));
   const setQty = (id, v) => updateProject(p => ({ ...p, quantities: { ...p.quantities, [id]: v === "" ? "" : Number(v) } }));

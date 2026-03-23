@@ -117,14 +117,14 @@ export default function TravauxTab({ current, calc, setQty, setMatC, setMoC, add
                   <div style={{ fontSize: 10, color: C.dim, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.desc}</div>
                 </div>
                 <div style={{ width: 55 }}>
-                  <input type="number" min={0} style={{ ...si.inputSm, background: q > 0 ? "#152015" : C.input }} value={current.quantities[item.id] ?? ""} onChange={e => setQty(item.id, e.target.value)} placeholder="0" />
+                  <input type="text" inputMode="decimal" min={0} style={{ ...si.inputSm, background: q > 0 ? "#152015" : C.input }} value={current.quantities[item.id] ?? ""} onChange={e => setQty(item.id, e.target.value)} placeholder="0" />
                 </div>
                 <div style={{ width: 30, fontSize: 10, color: "#666", textAlign: "center" }}>{item.unit}</div>
                 <div style={{ width: 70 }}>
-                  <input type="number" min={0} style={si.inputSm} value={current.customMat[item.id] ?? ""} onChange={e => setMatC(item.id, e.target.value)} placeholder={String(item.mat)} />
+                  <input type="text" inputMode="decimal" min={0} style={si.inputSm} value={current.customMat[item.id] ?? ""} onChange={e => setMatC(item.id, e.target.value)} placeholder={String(item.mat)} />
                 </div>
                 <div style={{ width: 70 }}>
-                  <input type="number" min={0} style={si.inputSm} value={current.customMo[item.id] ?? ""} onChange={e => setMoC(item.id, e.target.value)} placeholder={String(item.mo)} />
+                  <input type="text" inputMode="decimal" min={0} style={si.inputSm} value={current.customMo[item.id] ?? ""} onChange={e => setMoC(item.id, e.target.value)} placeholder={String(item.mo)} />
                 </div>
                 <div style={{ width: 80, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: tot > 0 ? C.text : "#333" }}>{tot > 0 ? fmt(tot) : "—"}</span>
@@ -167,11 +167,11 @@ export default function TravauxTab({ current, calc, setQty, setMatC, setMoC, add
               </div>
               <div style={{ width: 65 }}>
                 <div style={si.label}>Mat €</div>
-                <input type="number" style={si.inputSm} value={newItem.mat || ""} onChange={e => setNewItem(n => ({ ...n, mat: e.target.value }))} />
+                <input type="text" inputMode="decimal" style={si.inputSm} value={newItem.mat || ""} onChange={e => setNewItem(n => ({ ...n, mat: e.target.value }))} />
               </div>
               <div style={{ width: 65 }}>
                 <div style={si.label}>MO €</div>
-                <input type="number" style={si.inputSm} value={newItem.mo || ""} onChange={e => setNewItem(n => ({ ...n, mo: e.target.value }))} />
+                <input type="text" inputMode="decimal" style={si.inputSm} value={newItem.mo || ""} onChange={e => setNewItem(n => ({ ...n, mo: e.target.value }))} />
               </div>
               <button onClick={handleAddItem} style={si.btn(C.green + "22", C.green)}>OK</button>
               <button onClick={() => setShowAddForm(false)} style={si.btn("#1a1a2e", C.muted)}>&#x2715;</button>
