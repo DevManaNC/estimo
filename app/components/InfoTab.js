@@ -1,11 +1,26 @@
 "use client";
 
+import { useCallback, useRef } from "react";
 import { C, si } from "../styles";
 import { fmt } from "../utils/format";
 import { LOT_TYPES } from "../data/pricing";
 
 export default function InfoTab({ current, calc, updateInfo, setLots, renameProject }) {
   const info = current.info;
+  const cpTimer = useRef(null);
+
+  const handleCpChange = useCallback((value) => {
+    updateInfo("cp", value);
+    if (cpTimer.current) clearTimeout(cpTimer.current);
+    if (value.length === 5) {
+      cpTimer.current = setTimeout(() => {
+        fetch(`https://geo.api.gouv.fr/communes?codePostal=${value}&fields=nom&limit=1`)
+          .then(r => r.json())
+          .then(data => { if (data.length > 0) updateInfo("ville", data[0].nom); })
+          .catch(() => {});
+      }, 300);
+    }
+  }, [updateInfo]);
 
   return (
     <>
@@ -20,7 +35,7 @@ export default function InfoTab({ current, calc, updateInfo, setLots, renameProj
         </div>
         <div style={si.row}>
           <div style={{ flex: "2 1 200px" }}><div style={si.label}>Adresse</div><input style={si.input} value={info.adresse} onChange={e => updateInfo("adresse", e.target.value)} placeholder="15 Rue Mandajors" /></div>
-          <div style={{ flex: "0 0 100px" }}><div style={si.label}>CP</div><input style={si.input} value={info.cp} onChange={e => updateInfo("cp", e.target.value)} placeholder="34000" /></div>
+          <div style={{ flex: "0 0 100px" }}><div style={si.label}>CP</div><input style={si.input} value={info.cp} onChange={e => handleCpChange(e.target.value)} placeholder="34000" /></div>
           <div style={{ flex: "1 1 140px" }}><div style={si.label}>Ville</div><input style={si.input} value={info.ville} onChange={e => updateInfo("ville", e.target.value)} placeholder="Montpellier" /></div>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
