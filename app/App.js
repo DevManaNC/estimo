@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { C, si } from "./styles";
 import { fmt } from "./utils/format";
 import { genId } from "./utils/format";
@@ -33,12 +33,18 @@ const EMPTY_PROJECT = () => ({
 });
 
 export default function App() {
-  const [projects, setProjects] = useState(() => loadProjects());
+  const [projects, setProjects] = useState([]);
+  const [mounted, setMounted] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState("info");
   const [confirmDelete, setConfirmDelete] = useState(null);
   const saveTimer = useRef(null);
+
+  useEffect(() => {
+    setProjects(loadProjects());
+    setMounted(true);
+  }, []);
 
   const persistRef = useRef(null);
   const persist = useCallback((np) => {
@@ -116,6 +122,19 @@ export default function App() {
     });
     persist(merged);
   };
+
+  // ─── Loading (SSR/hydration safe) ───
+  if (!mounted) {
+    return (
+      <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "'DM Sans',sans-serif", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 10, color: C.gold, textTransform: "uppercase", letterSpacing: 3, fontWeight: 700 }}>Investissement locatif</div>
+          <h1 style={{ margin: "4px 0 0", fontSize: 26, fontWeight: 800, background: "linear-gradient(90deg,#c9a96e,#e8d5a8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ESTIMO</h1>
+          <p style={{ color: C.dim, fontSize: 13, marginTop: 12 }}>Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
   // ─── Dashboard ───
   if (!currentId) {
