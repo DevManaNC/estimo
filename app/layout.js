@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Estimo — Chiffrage Travaux",
-  description: "Outil de pré-chiffrage travaux pour investissement locatif",
+  title: "Estimo — Chiffrage Travaux Immobilier",
+  description: "Outil de pré-chiffrage travaux pour investissement locatif — simulation crédit, cash-flow, fiscalité LMNP",
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>",
   },
@@ -16,8 +16,6 @@ export const viewport = {
   themeColor: "#080810",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export default function RootLayout({ children }) {
