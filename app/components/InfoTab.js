@@ -13,7 +13,7 @@ export default function InfoTab({ current, calc, updateInfo, setLots, renameProj
   useEffect(() => {
     if (!info.cp || info.cp.length !== 5) return;
     const controller = new AbortController();
-    fetch(`https://geo.api.gouv.fr/communes?codePostal=${info.cp}&fields=nom&limit=1`, { signal: controller.signal })
+    fetch(`/api/geo?cp=${info.cp}`, { signal: controller.signal })
       .then(r => r.json())
       .then(data => { if (data.length > 0) updateInfoRef.current("ville", data[0].nom); })
       .catch(() => {});
