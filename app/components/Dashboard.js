@@ -89,6 +89,10 @@ export default function Dashboard({ projects, onOpen, onCreate, onDuplicate, onD
             </div>
           );
         })}
+
+        <div style={{ textAlign: "center", padding: "24px 0 12px", fontSize: 11, color: "#333" }}>
+          <a href="/mentions-legales" style={{ color: "#444", textDecoration: "none" }}>Mentions légales</a>
+        </div>
       </div>
     </div>
   );
