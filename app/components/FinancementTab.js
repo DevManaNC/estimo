@@ -101,11 +101,11 @@ export default function FinancementTab({ current, calc, fin, cashFlow, updateInf
         </div>
       </div></div>
 
-      {/* Tableau d'amortissement */}
+      {/* Tableau d&apos;amortissement */}
       {amortTable.length > 0 && (
         <div style={si.card}><div style={{ padding: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <h3 style={{ color: C.gold, margin: 0, fontSize: 14, fontWeight: 700 }}>Tableau d'amortissement</h3>
+            <h3 style={{ color: C.gold, margin: 0, fontSize: 14, fontWeight: 700 }}>Tableau d&apos;amortissement</h3>
             <button onClick={() => setShowAmort(!showAmort)} style={si.btn("#1a1a2e", C.muted)}>
               {showAmort ? "Masquer" : "Afficher"}
             </button>

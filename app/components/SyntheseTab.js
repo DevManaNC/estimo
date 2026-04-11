@@ -75,10 +75,10 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
         </div>
       </div></div>
 
-      {/* Matériaux vs Main d'oeuvre */}
+      {/* Matériaux vs Main d&apos;oeuvre */}
       {calc.totalTTC > 0 && (
         <div style={si.card}><div style={{ padding: 16 }}>
-          <h3 style={{ color: C.gold, margin: "0 0 12px", fontSize: 14 }}>Mat. vs Main d'oeuvre</h3>
+          <h3 style={{ color: C.gold, margin: "0 0 12px", fontSize: 14 }}>Mat. vs Main d&apos;oeuvre</h3>
           <div style={{ display: "flex", height: 24, borderRadius: 6, overflow: "hidden" }}>
             <div style={{ width: `${(calc.totalMat / (calc.totalMat + calc.totalMo)) * 100}%`, background: C.blue, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <span style={{ fontSize: 10, color: "#fff", fontWeight: 700 }}>Mat {((calc.totalMat / (calc.totalMat + calc.totalMo)) * 100).toFixed(0)}%</span>
@@ -158,7 +158,7 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
                 {fiscalite.regime === "reel" && <span style={{ fontSize: 10, background: C.green + "22", color: C.green, padding: "2px 8px", borderRadius: 4, fontWeight: 700 }}>Recommandé</span>}
               </div>
               <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Charges déductibles : {fmt(fiscalite.reel.chargesDeductibles)}</div>
-              <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Intérêts d'emprunt : {fmt(fiscalite.reel.interetsAnnuels)}/an</div>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Intérêts d&apos;emprunt : {fmt(fiscalite.reel.interetsAnnuels)}/an</div>
               <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Amort. immobilier : {fmt(fiscalite.reel.amortissementImmo)}/an</div>
               <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Amort. travaux : {fmt(fiscalite.reel.amortissementTravaux)}/an</div>
               <div style={{ fontSize: 11, color: C.dim, marginBottom: 4, borderTop: `1px solid ${C.cardBorder}`, paddingTop: 4, marginTop: 4 }}>Total déductions : {fmt(fiscalite.reel.totalDeductions)}</div>
@@ -168,7 +168,7 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
           {fiscalite.avantageReel !== 0 && (
             <div style={{ textAlign: "center", marginTop: 12, padding: 10, background: "#08080f", borderRadius: 8 }}>
               <span style={{ fontSize: 13, color: C.green, fontWeight: 700 }}>
-                Économie en {fiscalite.regime === "reel" ? "réel" : "micro-BIC"} : {fmt(Math.abs(fiscalite.avantageReel))}/an d'assiette imposable
+                Économie en {fiscalite.regime === "reel" ? "réel" : "micro-BIC"} : {fmt(Math.abs(fiscalite.avantageReel))}/an d&apos;assiette imposable
               </span>
             </div>
           )}
