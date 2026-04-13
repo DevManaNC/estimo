@@ -6,7 +6,7 @@ import { fmt } from "../utils/format";
 import { calcProject } from "../utils/calc";
 import { exportProjectsJSON, importProjectsJSON } from "../utils/storage";
 
-export default function Dashboard({ projects, onOpen, onCreate, onDuplicate, onDelete, onImport, confirmDelete, setConfirmDelete }) {
+export default function Dashboard({ projects, onOpen, onCreate, onDuplicate, onDelete, onImport, confirmDelete, setConfirmDelete, onSignOut, userEmail }) {
   const fileRef = useRef(null);
 
   const handleImport = async (e) => {
@@ -27,6 +27,14 @@ export default function Dashboard({ projects, onOpen, onCreate, onDuplicate, onD
         <div style={{ fontSize: 10, color: C.gold, textTransform: "uppercase", letterSpacing: 3, fontWeight: 700 }}>Investissement locatif</div>
         <h1 style={{ margin: "4px 0 0", fontSize: 26, fontWeight: 800, background: "linear-gradient(90deg,#c9a96e,#e8d5a8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ESTIMO</h1>
         <p style={{ color: C.dim, fontSize: 13, margin: "8px 0 0" }}>{projects.length} projet{projects.length !== 1 ? "s" : ""}</p>
+        {userEmail && (
+          <div style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <span style={{ fontSize: 11, color: C.dim }}>{userEmail}</span>
+            <button onClick={onSignOut} style={{ background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: 6, color: C.muted, cursor: "pointer", fontSize: 11, padding: "4px 10px", fontFamily: "'DM Sans',sans-serif" }}>
+              Déconnexion
+            </button>
+          </div>
+        )}
       </div>
 
       <div style={{ maxWidth: 700, margin: "20px auto", padding: "0 16px" }}>

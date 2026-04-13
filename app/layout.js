@@ -16,12 +16,12 @@ export const metadata = {
   ],
   authors: [{ name: "Estimo" }],
   creator: "Estimo",
-  metadataBase: new URL("https://estimo-chiffrage.fr"),
+  metadataBase: new URL("https://estimo-five.vercel.app"),
   openGraph: {
     title: "Estimo — Chiffrage Travaux Immobilier",
     description:
       "Pré-chiffrez vos travaux de rénovation, simulez votre crédit et calculez votre rendement locatif.",
-    url: "https://estimo-chiffrage.fr",
+    url: "https://estimo-five.vercel.app",
     siteName: "Estimo",
     locale: "fr_FR",
     type: "website",

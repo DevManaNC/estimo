@@ -4,8 +4,9 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { C, si } from "./styles";
 import { fmt } from "./utils/format";
 import { genId } from "./utils/format";
-import { loadProjects, saveProjects } from "./utils/storage";
 import { calcProject, calcFinancement, calcCashFlow, calcFiscalite } from "./utils/calc";
+import { useAuth } from "./lib/AuthContext";
+import { loadProjectsFromDB, saveProjectToDB, deleteProjectFromDB, migrateLocalProjects } from "./utils/supabase-storage";
 import Dashboard from "./components/Dashboard";
 import InfoTab from "./components/InfoTab";
 import TravauxTab from "./components/TravauxTab";
@@ -33,38 +34,53 @@ const EMPTY_PROJECT = () => ({
 });
 
 export default function App() {
+  const { user, signOut } = useAuth();
   const [projects, setProjects] = useState([]);
   const [mounted, setMounted] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState("info");
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [migrated, setMigrated] = useState(null);
   const saveTimer = useRef(null);
 
+  // Load projects from Supabase + migrate localStorage if needed
   useEffect(() => {
-    setProjects(loadProjects());
-    setMounted(true);
-  }, []);
+    if (!user) return;
+    (async () => {
+      // Migrate localStorage projects first
+      const count = await migrateLocalProjects(user.id);
+      if (count > 0) setMigrated(count);
 
-  const persistRef = useRef(null);
-  const persist = useCallback((np) => {
-    setProjects(np);
+      const dbProjects = await loadProjectsFromDB(user.id);
+      setProjects(dbProjects);
+      setMounted(true);
+    })();
+  }, [user]);
+
+  const persistProject = useCallback((project) => {
+    if (!user) return;
     setSaving(true);
-    if (persistRef.current) clearTimeout(persistRef.current);
-    persistRef.current = setTimeout(() => { saveProjects(np); setSaving(false); }, 400);
-  }, []);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      await saveProjectToDB(user.id, project);
+      setSaving(false);
+    }, 800);
+  }, [user]);
 
   const current = projects.find(p => p.id === currentId);
 
   const updateProject = useCallback((fn) => {
     setProjects(prev => {
-      const np = prev.map(p => p.id === currentId ? { ...fn(p), updatedAt: new Date().toISOString() } : p);
-      setSaving(true);
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(() => { saveProjects(np); setSaving(false); }, 400);
+      const np = prev.map(p => {
+        if (p.id !== currentId) return p;
+        const updated = { ...fn(p), updatedAt: new Date().toISOString() };
+        persistProject(updated);
+        return updated;
+      });
       return np;
     });
-  }, [currentId]);
+  }, [currentId, persistProject]);
 
   const updateInfo = (k, v) => updateProject(p => ({ ...p, info: { ...p.info, [k]: v } }));
   const setQty = (id, v) => updateProject(p => ({ ...p, quantities: { ...p.quantities, [id]: v === "" ? "" : Number(v) } }));
@@ -91,36 +107,50 @@ export default function App() {
     notes: { ...p.notes, [itemId]: value },
   }));
 
-  const createProject = () => {
+  const createProject = async () => {
     const np = EMPTY_PROJECT();
-    persist([...projects, np]);
+    setProjects(prev => [...prev, np]);
     setCurrentId(np.id);
     setTab("info");
+    if (user) await saveProjectToDB(user.id, np);
   };
 
-  const duplicateProject = (id) => {
+  const duplicateProject = async (id) => {
     const src = projects.find(p => p.id === id);
     if (!src) return;
     const np = { ...JSON.parse(JSON.stringify(src)), id: genId(), name: src.name + " (copie)", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-    persist([...projects, np]);
+    setProjects(prev => [...prev, np]);
+    if (user) await saveProjectToDB(user.id, np);
   };
 
-  const deleteProject = (id) => {
-    persist(projects.filter(p => p.id !== id));
+  const deleteProject = async (id) => {
+    setProjects(prev => prev.filter(p => p.id !== id));
     if (currentId === id) setCurrentId(null);
     setConfirmDelete(null);
+    await deleteProjectFromDB(id);
   };
 
   const renameProject = (id, name) => {
-    persist(projects.map(p => p.id === id ? { ...p, name, updatedAt: new Date().toISOString() } : p));
+    setProjects(prev => {
+      const np = prev.map(p => {
+        if (p.id !== id) return p;
+        const updated = { ...p, name, updatedAt: new Date().toISOString() };
+        persistProject(updated);
+        return updated;
+      });
+      return np;
+    });
   };
 
-  const handleImport = (data) => {
+  const handleImport = async (data) => {
     const merged = [...projects];
-    data.forEach(p => {
-      if (!merged.find(x => x.id === p.id)) merged.push(p);
-    });
-    persist(merged);
+    for (const p of data) {
+      if (!merged.find(x => x.id === p.id)) {
+        merged.push(p);
+        if (user) await saveProjectToDB(user.id, p);
+      }
+    }
+    setProjects(merged);
   };
 
   // ─── Loading (SSR/hydration safe) ───
@@ -139,16 +169,26 @@ export default function App() {
   // ─── Dashboard ───
   if (!currentId) {
     return (
-      <Dashboard
-        projects={projects}
-        onOpen={(id) => { setCurrentId(id); setTab("info"); }}
-        onCreate={createProject}
-        onDuplicate={duplicateProject}
-        onDelete={deleteProject}
-        onImport={handleImport}
-        confirmDelete={confirmDelete}
-        setConfirmDelete={setConfirmDelete}
-      />
+      <>
+        {migrated && (
+          <div style={{ background: C.green + "22", border: `1px solid ${C.green}44`, borderRadius: 8, padding: "10px 16px", margin: "12px 16px", maxWidth: 700, marginLeft: "auto", marginRight: "auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 13, color: C.green }}>{migrated} projet{migrated > 1 ? "s" : ""} importé{migrated > 1 ? "s" : ""} depuis votre navigateur</span>
+            <button onClick={() => setMigrated(null)} style={{ background: "none", border: "none", color: C.green, cursor: "pointer", fontSize: 16 }}>&#x2715;</button>
+          </div>
+        )}
+        <Dashboard
+          projects={projects}
+          onOpen={(id) => { setCurrentId(id); setTab("info"); }}
+          onCreate={createProject}
+          onDuplicate={duplicateProject}
+          onDelete={deleteProject}
+          onImport={handleImport}
+          confirmDelete={confirmDelete}
+          setConfirmDelete={setConfirmDelete}
+          onSignOut={signOut}
+          userEmail={user?.email}
+        />
+      </>
     );
   }
 
@@ -210,6 +250,9 @@ export default function App() {
       </div>
 
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "16px 12px 60px" }}>
+        <div style={{ background: "#1a1510", border: `1px solid ${C.gold}33`, borderRadius: 8, padding: "8px 14px", marginBottom: 12, fontSize: 11, color: C.gold, lineHeight: 1.4 }}>
+          Estimations indicatives basées sur des moyennes régionales — à ajuster selon devis réels.
+        </div>
         {tab === "info" && (
           <InfoTab current={current} calc={calc} updateInfo={updateInfo} setLots={setLots} renameProject={renameProject} />
         )}
