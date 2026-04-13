@@ -1,10 +1,17 @@
-import { ETAPES } from "../data/pricing";
+import { ETAPES } from "../data/pricing.js";
+
+/** Clamp a number to a safe range, defaulting to 0 for non-finite values */
+function safe(v, min = 0, max = Infinity) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return min;
+  return Math.min(Math.max(n, min), max);
+}
 
 export function calcProject(p) {
   const { info, lots, quantities, customMat = {}, customMo = {}, customItems = {} } = p;
-  const gM = (item) => customMat[item.id] !== undefined && customMat[item.id] !== "" ? Number(customMat[item.id]) : item.mat;
-  const gO = (item) => customMo[item.id] !== undefined && customMo[item.id] !== "" ? Number(customMo[item.id]) : item.mo;
-  const gQ = (item) => quantities[item.id] || 0;
+  const gM = (item) => customMat[item.id] !== undefined && customMat[item.id] !== "" ? safe(customMat[item.id]) : safe(item.mat);
+  const gO = (item) => customMo[item.id] !== undefined && customMo[item.id] !== "" ? safe(customMo[item.id]) : safe(item.mo);
+  const gQ = (item) => safe(quantities[item.id]);
 
   const etapes = ETAPES.map(e => {
     const extras = (customItems[e.id] || []);
@@ -20,27 +27,27 @@ export function calcProject(p) {
   const totalMat = etapes.reduce((s, e) => s + e.matT, 0);
   const totalMo = etapes.reduce((s, e) => s + e.moT, 0);
 
-  const prixNet = (info.prixVente || 0) - (info.negociation || 0);
-  const fraisNotaireEur = Math.round(prixNet * (info.fraisNotaire || 0) / 100);
-  const acteEnMain = prixNet + fraisNotaireEur + (info.fraisAgence || 0);
+  const prixNet = safe(info.prixVente) - safe(info.negociation);
+  const fraisNotaireEur = Math.round(prixNet * safe(info.fraisNotaire, 0, 100) / 100);
+  const acteEnMain = prixNet + fraisNotaireEur + safe(info.fraisAgence);
   const montantTotal = acteEnMain + totalTTC;
-  const coutM2 = info.surface > 0 ? Math.round(montantTotal / info.surface) : 0;
+  const coutM2 = info.surface > 0 ? Math.round(montantTotal / safe(info.surface, 1)) : 0;
 
-  const loyerMensuel = lots.reduce((s, l) => s + (l.loyer || 0) * (l.qty || 1), 0);
+  const loyerMensuel = lots.reduce((s, l) => s + safe(l.loyer) * safe(l.qty, 1), 0);
   const loyerAnnuel = loyerMensuel * 12;
 
-  const chargesCopro = info.chargesCopro || 0;
-  const fraisGestionPct = info.fraisGestion || 0;
-  const tauxVacance = info.tauxVacance || 0;
-  const assuranceGLI = info.assuranceGLI || 0;
+  const chargesCopro = safe(info.chargesCopro);
+  const fraisGestionPct = safe(info.fraisGestion, 0, 100);
+  const tauxVacance = safe(info.tauxVacance, 0, 100);
+  const assuranceGLI = safe(info.assuranceGLI);
 
   const fraisGestionEur = Math.round(loyerAnnuel * fraisGestionPct / 100);
-  const chargesAn = (info.taxeFonciere || 0) + (info.assurancePNO || 0) + chargesCopro + assuranceGLI + fraisGestionEur;
+  const chargesAn = safe(info.taxeFonciere) + safe(info.assurancePNO) + chargesCopro + assuranceGLI + fraisGestionEur;
   const loyerEffectif = Math.round(loyerAnnuel * (1 - tauxVacance / 100));
 
   const rentaBrute = montantTotal > 0 ? (loyerAnnuel / montantTotal) * 100 : 0;
   const rentaNette = montantTotal > 0 ? ((loyerEffectif - chargesAn) / montantTotal) * 100 : 0;
-  const plusValue = ((info.prixM2Renove || 0) - coutM2) * (info.surface || 0);
+  const plusValue = (safe(info.prixM2Renove) - coutM2) * safe(info.surface);
 
   return {
     etapes, totalTTC, totalHT, totalMat, totalMo,
@@ -52,12 +59,12 @@ export function calcProject(p) {
 }
 
 export function calcFinancement(info, montantTotal) {
-  const apportPct = info.apport || 0;
+  const apportPct = safe(info.apport, 0, 100);
   const apportEur = Math.round(montantTotal * apportPct / 100);
   const emprunt = montantTotal - apportEur;
-  const tauxAnnuel = (info.tauxCredit || 0) / 100;
+  const tauxAnnuel = safe(info.tauxCredit, 0, 30) / 100;
   const tauxMensuel = tauxAnnuel / 12;
-  const duree = info.dureeCredit || 20;
+  const duree = safe(info.dureeCredit, 1, 30);
   const nbMois = duree * 12;
 
   let mensualite = 0;
@@ -78,11 +85,11 @@ export function calcFinancement(info, montantTotal) {
 }
 
 export function calcCashFlow(info, calc, fin) {
-  const tauxVacance = info.tauxVacance || 0;
-  const fraisGestionPct = info.fraisGestion || 0;
+  const tauxVacance = safe(info.tauxVacance, 0, 100);
+  const fraisGestionPct = safe(info.fraisGestion, 0, 100);
 
   const loyerEffectifMensuel = Math.round(calc.loyerMensuel * (1 - tauxVacance / 100));
-  const chargesMensuelles = Math.round(((info.taxeFonciere || 0) + (info.assurancePNO || 0) + (info.chargesCopro || 0) + (info.assuranceGLI || 0)) / 12);
+  const chargesMensuelles = Math.round((safe(info.taxeFonciere) + safe(info.assurancePNO) + safe(info.chargesCopro) + safe(info.assuranceGLI)) / 12);
   const gestionMensuelle = Math.round(calc.loyerMensuel * fraisGestionPct / 100);
 
   const cashFlowAvantImpot = loyerEffectifMensuel - fin.mensualite - chargesMensuelles - gestionMensuelle;
@@ -106,9 +113,9 @@ export function calcFiscalite(info, calc, fin) {
   };
 
   // Regime reel LMNP
-  const chargesDeductibles = (info.taxeFonciere || 0) + (info.assurancePNO || 0) +
-    (info.chargesCopro || 0) + (info.assuranceGLI || 0) +
-    Math.round(loyerAnnuel * (info.fraisGestion || 0) / 100);
+  const chargesDeductibles = safe(info.taxeFonciere) + safe(info.assurancePNO) +
+    safe(info.chargesCopro) + safe(info.assuranceGLI) +
+    Math.round(loyerAnnuel * safe(info.fraisGestion, 0, 100) / 100);
 
   const interetsAnnuels = fin.duree > 0 ? Math.round(fin.interets / fin.duree) : 0;
   const valeurAmortissable = calc.acteEnMain * 0.85; // hors terrain ~15%
