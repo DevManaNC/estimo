@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://estimo-chiffrage.fr/sitemap.xml
+Sitemap: https://estimo-five.vercel.app/sitemap.xml

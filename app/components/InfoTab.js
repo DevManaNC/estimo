@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { C, si } from "../styles";
 import { fmt } from "../utils/format";
 import { LOT_TYPES } from "../data/pricing";
+import { getDepartment } from "../data/regions";
 
 export default function InfoTab({ current, calc, updateInfo, setLots, renameProject }) {
   const info = current.info;
@@ -36,6 +37,15 @@ export default function InfoTab({ current, calc, updateInfo, setLots, renameProj
           <div style={{ flex: "0 0 100px" }}><div style={si.label}>CP</div><input style={si.input} value={info.cp} onChange={e => updateInfo("cp", e.target.value)} placeholder="34000" /></div>
           <div style={{ flex: "1 1 140px" }}><div style={si.label}>Ville</div><input style={si.input} value={info.ville} onChange={e => updateInfo("ville", e.target.value)} placeholder="Montpellier" /></div>
         </div>
+        {info.cp && info.cp.length >= 2 && (() => {
+          const dept = getDepartment(info.cp);
+          if (!dept) return null;
+          return (
+            <div style={{ fontSize: 11, color: C.muted, marginTop: -4, marginBottom: 8 }}>
+              {dept.name} ({dept.code}) — coeff. régional : <span style={{ color: dept.multiplier !== 1 ? C.gold : C.green, fontWeight: 700 }}>{dept.multiplier.toFixed(2)}</span>
+            </div>
+          );
+        })()}
         <div style={{ display: "flex", gap: 10 }}>
           <div style={{ flex: 1 }}><div style={si.label}>Surface (m²)</div><input type="text" inputMode="decimal" style={si.input} value={info.surface || ""} onChange={e => updateInfo("surface", +e.target.value || 0)} /></div>
           <div style={{ flex: 1 }}><div style={si.label}>Prix m² rénové marché</div><input type="text" inputMode="decimal" style={si.input} value={info.prixM2Renove || ""} onChange={e => updateInfo("prixM2Renove", +e.target.value || 0)} /></div>

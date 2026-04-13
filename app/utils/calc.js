@@ -1,4 +1,5 @@
 import { ETAPES } from "../data/pricing.js";
+import { getMultiplier } from "../data/regions.js";
 
 /** Clamp a number to a safe range, defaulting to 0 for non-finite values */
 function safe(v, min = 0, max = Infinity) {
@@ -9,8 +10,10 @@ function safe(v, min = 0, max = Infinity) {
 
 export function calcProject(p) {
   const { info, lots, quantities, customMat = {}, customMo = {}, customItems = {} } = p;
-  const gM = (item) => customMat[item.id] !== undefined && customMat[item.id] !== "" ? safe(customMat[item.id]) : safe(item.mat);
-  const gO = (item) => customMo[item.id] !== undefined && customMo[item.id] !== "" ? safe(customMo[item.id]) : safe(item.mo);
+  const mult = getMultiplier(info.cp);
+  // Apply regional multiplier to default prices only (not user-customized prices)
+  const gM = (item) => customMat[item.id] !== undefined && customMat[item.id] !== "" ? safe(customMat[item.id]) : Math.round(safe(item.mat) * mult * 100) / 100;
+  const gO = (item) => customMo[item.id] !== undefined && customMo[item.id] !== "" ? safe(customMo[item.id]) : Math.round(safe(item.mo) * mult * 100) / 100;
   const gQ = (item) => safe(quantities[item.id]);
 
   const etapes = ETAPES.map(e => {
@@ -55,6 +58,7 @@ export function calcProject(p) {
     loyerMensuel, loyerAnnuel, loyerEffectif,
     rentaBrute, rentaNette, plusValue,
     fraisNotaireEur, prixNet, chargesAn, fraisGestionEur,
+    regionalMultiplier: mult,
   };
 }
 
