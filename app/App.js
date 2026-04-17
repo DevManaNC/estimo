@@ -44,6 +44,7 @@ export default function App() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [migrated, setMigrated] = useState(null);
   const saveTimer = useRef(null);
+  const pendingSave = useRef(null);
 
   useEffect(() => {
     if (!user) return;
@@ -60,11 +61,33 @@ export default function App() {
   const persistProject = useCallback((project) => {
     if (!user) return;
     setSaving(true);
+    pendingSave.current = project;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       await saveProjectToDB(user.id, project);
+      pendingSave.current = null;
       setSaving(false);
     }, 800);
+  }, [user]);
+
+  const flushSave = useCallback(async () => {
+    if (!pendingSave.current || !user) return;
+    clearTimeout(saveTimer.current);
+    await saveProjectToDB(user.id, pendingSave.current);
+    pendingSave.current = null;
+    setSaving(false);
+  }, [user]);
+
+  // Flush on page close/refresh
+  useEffect(() => {
+    const handler = () => {
+      if (pendingSave.current && user) {
+        clearTimeout(saveTimer.current);
+        saveProjectToDB(user.id, pendingSave.current);
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
   }, [user]);
 
   const current = projects.find(p => p.id === currentId);
@@ -207,7 +230,7 @@ export default function App() {
       {/* Header */}
       <div className="no-print" style={{ background: `linear-gradient(135deg,${C.headerBg1},${C.headerBg2})`, borderBottom: `1px solid ${C.cardBorder}`, padding: "14px 16px" }}>
         <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", alignItems: "center", gap: 12 }}>
-          <button onClick={() => setCurrentId(null)} style={{ background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: 8, color: C.gold, padding: "8px 14px", cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans',sans-serif", flexShrink: 0 }}>&#x2190;</button>
+          <button onClick={async () => { await flushSave(); setCurrentId(null); }} style={{ background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: 8, color: C.gold, padding: "8px 14px", cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans',sans-serif", flexShrink: 0 }}>&#x2190;</button>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: C.gold, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{current.name}</div>
             <div style={{ fontSize: 11, color: C.dim }}>{info.adresse ? `${info.adresse}, ` : ""}{info.cp} {info.ville}{info.surface ? ` — ${info.surface}m²` : ""}</div>
