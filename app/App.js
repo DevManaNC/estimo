@@ -35,7 +35,7 @@ const EMPTY_PROJECT = () => ({
 
 export default function App() {
   const { user, signOut } = useAuth();
-  const { C, si, theme, toggleTheme } = useTheme();
+  const { C, si } = useTheme();
   const [projects, setProjects] = useState([]);
   const [mounted, setMounted] = useState(false);
   const [currentId, setCurrentId] = useState(null);
@@ -247,9 +247,6 @@ export default function App() {
               )}
             </div>
           )}
-          <button onClick={toggleTheme} style={{ background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: 6, color: C.muted, cursor: "pointer", fontSize: 11, padding: "4px 10px", fontFamily: "'DM Sans',sans-serif", flexShrink: 0 }}>
-            {theme === "dark" ? "Mode clair" : "Mode sombre"}
-          </button>
         </div>
       </div>
 

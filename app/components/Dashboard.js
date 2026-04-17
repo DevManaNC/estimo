@@ -5,7 +5,7 @@ import { fmt } from "../utils/format";
 import { calcProject } from "../utils/calc";
 
 export default function Dashboard({ projects, onOpen, onCreate, onDuplicate, onDelete, confirmDelete, setConfirmDelete, onSignOut, userEmail }) {
-  const { C, si, theme, toggleTheme } = useTheme();
+  const { C, si } = useTheme();
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "'DM Sans',sans-serif" }}>
@@ -16,9 +16,6 @@ export default function Dashboard({ projects, onOpen, onCreate, onDuplicate, onD
         {userEmail && (
           <div style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
             <span style={{ fontSize: 11, color: C.dim }}>{userEmail}</span>
-            <button onClick={toggleTheme} style={{ background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: 6, color: C.muted, cursor: "pointer", fontSize: 11, padding: "4px 10px", fontFamily: "'DM Sans',sans-serif" }}>
-              {theme === "dark" ? "Mode clair" : "Mode sombre"}
-            </button>
             <button onClick={onSignOut} style={{ background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: 6, color: C.muted, cursor: "pointer", fontSize: 11, padding: "4px 10px", fontFamily: "'DM Sans',sans-serif" }}>
               Déconnexion
             </button>
