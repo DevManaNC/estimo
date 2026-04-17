@@ -1,0 +1,3 @@
+Relancer : git worktree remove .claude/worktrees/stupefied-payne --force
+Relancer : git worktree remove .claude/worktrees/vigorous-lamarr --force
+Puis : git branch -d claude/stupefied-payne claude/vigorous-lamarr
