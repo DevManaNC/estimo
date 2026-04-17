@@ -35,7 +35,7 @@ const EMPTY_PROJECT = () => ({
 
 export default function App() {
   const { user, signOut } = useAuth();
-  const { C, si, theme, toggleTheme } = useTheme();
+  const { C, si } = useTheme();
   const [projects, setProjects] = useState([]);
   const [mounted, setMounted] = useState(false);
   const [currentId, setCurrentId] = useState(null);

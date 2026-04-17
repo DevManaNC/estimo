@@ -5,25 +5,31 @@ import { fmt } from "../utils/format";
 import { calcProject } from "../utils/calc";
 
 export default function Dashboard({ projects, onOpen, onCreate, onDuplicate, onDelete, confirmDelete, setConfirmDelete, onSignOut, userEmail }) {
-  const { C, si, theme, toggleTheme } = useTheme();
+  const { C, si } = useTheme();
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "'DM Sans',sans-serif" }}>
-      <div style={{ background: `linear-gradient(135deg,${C.headerBg1},${C.headerBg2})`, borderBottom: `1px solid ${C.cardBorder}`, padding: "28px 20px 22px", textAlign: "center" }}>
-        <div style={{ fontSize: 10, color: C.gold, textTransform: "uppercase", letterSpacing: 3, fontWeight: 700 }}>Investissement locatif</div>
-        <h1 style={{ margin: "4px 0 0", fontSize: 26, fontWeight: 800, background: "linear-gradient(90deg,#c9a96e,#e8d5a8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ESTIMO</h1>
-        <p style={{ color: C.dim, fontSize: 13, margin: "8px 0 0" }}>{projects.length} projet{projects.length !== 1 ? "s" : ""}</p>
+      <div style={{ position: "relative", background: `linear-gradient(135deg,${C.headerBg1},${C.headerBg2})`, borderBottom: `1px solid ${C.cardBorder}`, padding: "28px 20px 22px", textAlign: "center" }}>
         {userEmail && (
-          <div style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <span style={{ fontSize: 11, color: C.dim }}>{userEmail}</span>
-            <button onClick={toggleTheme} style={{ background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: 6, color: C.muted, cursor: "pointer", fontSize: 11, padding: "4px 10px", fontFamily: "'DM Sans',sans-serif" }}>
-              {theme === "dark" ? "Mode clair" : "Mode sombre"}
-            </button>
-            <button onClick={onSignOut} style={{ background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: 6, color: C.muted, cursor: "pointer", fontSize: 11, padding: "4px 10px", fontFamily: "'DM Sans',sans-serif" }}>
-              Déconnexion
+          <div style={{ position: "absolute", top: 14, left: 14, display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: C.gold + "22", border: `1px solid ${C.gold}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: C.gold, flexShrink: 0 }}>
+              {userEmail[0].toUpperCase()}
+            </div>
+            <span style={{ fontSize: 11, color: C.muted, maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {userEmail}
+            </span>
+            <button onClick={onSignOut} title="Se déconnecter" style={{ background: "none", border: "none", color: C.dim, cursor: "pointer", padding: 4, display: "flex", alignItems: "center", flexShrink: 0 }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
             </button>
           </div>
         )}
+        <div style={{ fontSize: 10, color: C.gold, textTransform: "uppercase", letterSpacing: 3, fontWeight: 700 }}>Investissement locatif</div>
+        <h1 style={{ margin: "4px 0 0", fontSize: 26, fontWeight: 800, background: "linear-gradient(90deg,#c9a96e,#e8d5a8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ESTIMO</h1>
+        <p style={{ color: C.dim, fontSize: 13, margin: "8px 0 0" }}>{projects.length} projet{projects.length !== 1 ? "s" : ""}</p>
       </div>
 
       <div style={{ maxWidth: 700, margin: "20px auto", padding: "0 16px" }}>
