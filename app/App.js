@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { C, si } from "./styles";
+import { useTheme } from "./lib/ThemeContext";
 import { fmt } from "./utils/format";
 import { genId } from "./utils/format";
 import { calcProject, calcFinancement, calcCashFlow, calcFiscalite } from "./utils/calc";
@@ -35,6 +35,7 @@ const EMPTY_PROJECT = () => ({
 
 export default function App() {
   const { user, signOut } = useAuth();
+  const { C, si, theme, toggleTheme } = useTheme();
   const [projects, setProjects] = useState([]);
   const [mounted, setMounted] = useState(false);
   const [currentId, setCurrentId] = useState(null);
@@ -44,11 +45,9 @@ export default function App() {
   const [migrated, setMigrated] = useState(null);
   const saveTimer = useRef(null);
 
-  // Load projects from Supabase + migrate localStorage if needed
   useEffect(() => {
     if (!user) return;
     (async () => {
-      // Migrate localStorage projects first
       const count = await migrateLocalProjects(user.id);
       if (count > 0) setMigrated(count);
 
@@ -153,7 +152,6 @@ export default function App() {
     setProjects(merged);
   };
 
-  // ─── Loading (SSR/hydration safe) ───
   if (!mounted) {
     return (
       <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "'DM Sans',sans-serif", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -166,7 +164,6 @@ export default function App() {
     );
   }
 
-  // ─── Dashboard ───
   if (!currentId) {
     return (
       <>
@@ -192,7 +189,6 @@ export default function App() {
     );
   }
 
-  // ─── Project Editor ───
   const calc = calcProject(current);
   const fin = calcFinancement(current.info, calc.montantTotal);
   const cashFlow = calcCashFlow(current.info, calc, fin);
@@ -209,7 +205,7 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "'DM Sans',sans-serif" }}>
       {/* Header */}
-      <div className="no-print" style={{ background: "linear-gradient(135deg,#0f0f1a,#161628)", borderBottom: `1px solid ${C.cardBorder}`, padding: "14px 16px" }}>
+      <div className="no-print" style={{ background: `linear-gradient(135deg,${C.headerBg1},${C.headerBg2})`, borderBottom: `1px solid ${C.cardBorder}`, padding: "14px 16px" }}>
         <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", alignItems: "center", gap: 12 }}>
           <button onClick={() => setCurrentId(null)} style={{ background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: 8, color: C.gold, padding: "8px 14px", cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans',sans-serif", flexShrink: 0 }}>&#x2190;</button>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -228,18 +224,21 @@ export default function App() {
               )}
             </div>
           )}
+          <button onClick={toggleTheme} style={{ background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: 6, color: C.muted, cursor: "pointer", fontSize: 11, padding: "4px 10px", fontFamily: "'DM Sans',sans-serif", flexShrink: 0 }}>
+            {theme === "dark" ? "Mode clair" : "Mode sombre"}
+          </button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="no-print" style={{ display: "flex", gap: 2, padding: "8px 12px", background: "#0a0a14", borderBottom: "1px solid #1a1a30", position: "sticky", top: 0, zIndex: 20, justifyContent: "center", flexWrap: "wrap" }}>
+      <div className="no-print" style={{ display: "flex", gap: 2, padding: "8px 12px", background: C.surfaceAlt, borderBottom: `1px solid ${C.cardBorder}`, position: "sticky", top: 0, zIndex: 20, justifyContent: "center", flexWrap: "wrap" }}>
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             padding: "10px 16px",
             background: tab === t.id ? C.gold + "22" : "transparent",
             border: tab === t.id ? `1px solid ${C.gold}55` : "1px solid transparent",
             borderRadius: 8,
-            color: tab === t.id ? C.gold : "#666",
+            color: tab === t.id ? C.gold : C.dim,
             cursor: "pointer", fontSize: 13,
             fontWeight: tab === t.id ? 700 : 500,
             fontFamily: "'DM Sans',sans-serif",
@@ -250,7 +249,7 @@ export default function App() {
       </div>
 
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "16px 12px 60px" }}>
-        <div style={{ background: "#1a1510", border: `1px solid ${C.gold}33`, borderRadius: 8, padding: "8px 14px", marginBottom: 12, fontSize: 11, color: C.gold, lineHeight: 1.4 }}>
+        <div style={{ background: C.gold + "15", border: `1px solid ${C.gold}33`, borderRadius: 8, padding: "8px 14px", marginBottom: 12, fontSize: 11, color: C.gold, lineHeight: 1.4 }}>
           Estimations indicatives basées sur des moyennes régionales — à ajuster selon devis réels.
         </div>
         {tab === "info" && (

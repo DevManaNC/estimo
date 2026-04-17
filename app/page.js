@@ -1,13 +1,14 @@
 "use client";
 
 import { AuthProvider, useAuth } from "./lib/AuthContext";
+import { useTheme } from "./lib/ThemeContext";
 import App from "./App";
 import Paywall from "./components/Paywall";
 import LoginPage from "./auth/login/page";
-import { C } from "./styles";
 
 function AuthGate() {
   const { user, profile, loading, hasAccess } = useAuth();
+  const { C } = useTheme();
 
   if (loading) {
     return (

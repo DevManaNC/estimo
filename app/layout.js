@@ -1,4 +1,5 @@
 import "./globals.css";
+import { ThemeProvider } from "./lib/ThemeContext";
 
 export const metadata = {
   title: "Estimo — Chiffrage Travaux Immobilier",
@@ -54,7 +55,7 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="fr">
-      <body>{children}</body>
+      <body><ThemeProvider>{children}</ThemeProvider></body>
     </html>
   );
 }

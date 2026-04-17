@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { C, si } from "../styles";
+import { useTheme } from "../lib/ThemeContext";
 import { ETAPES } from "../data/pricing";
 import { LOT_TYPES } from "../data/pricing";
 import { fmt, fmtDec } from "../utils/format";
 
 export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite }) {
+  const { C, si } = useTheme();
   const [showExport, setShowExport] = useState(false);
   const info = current.info;
 
@@ -58,13 +59,13 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
             const pct = maxEtapeTTC > 0 ? (e.ttc / maxEtapeTTC) * 100 : 0;
             return (
               <div key={e.id} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                <div style={{ fontSize: 10, color: e.ttc > 0 ? e.color : "#333", fontWeight: 700 }}>
+                <div style={{ fontSize: 10, color: e.ttc > 0 ? e.color : C.dim, fontWeight: 700 }}>
                   {e.ttc > 0 ? `${(e.ttc / 1000).toFixed(0)}k` : ""}
                 </div>
                 <div style={{
                   width: "100%", maxWidth: 50,
                   height: `${Math.max(pct, 2)}%`,
-                  background: e.ttc > 0 ? `linear-gradient(to top, ${e.color}, ${e.color}88)` : "#1a1a2e",
+                  background: e.ttc > 0 ? `linear-gradient(to top, ${e.color}, ${e.color}88)` : C.btnBg,
                   borderRadius: "4px 4px 0 0",
                   transition: "height 0.3s ease",
                 }} />
@@ -98,7 +99,7 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
       <div style={si.card}><div style={{ padding: 16 }}>
         <h3 style={{ color: C.gold, margin: "0 0 12px", fontSize: 14 }}>Détail par étape</h3>
         {calc.etapes.filter(e => e.ht > 0).map(e => (
-          <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", borderLeft: `3px solid ${e.color}`, marginBottom: 6, background: "#08080f", borderRadius: "0 6px 6px 0" }}>
+          <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", borderLeft: `3px solid ${e.color}`, marginBottom: 6, background: C.surface, borderRadius: "0 6px 6px 0" }}>
             <div>
               <span style={{ color: e.color, fontWeight: 700, fontSize: 13 }}>{e.num}. {e.label}</span>
               <span style={{ fontSize: 10, color: C.dim, marginLeft: 8 }}>Mat {fmt(e.matT)} · MO {fmt(e.moT)}</span>
@@ -106,7 +107,7 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
             <span style={{ fontWeight: 700, fontSize: 14 }}>{fmtDec(e.ttc)}</span>
           </div>
         ))}
-        <div style={{ display: "flex", justifyContent: "space-between", padding: 10, background: "#0a1a0d", borderRadius: 6, marginTop: 6 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", padding: 10, background: C.green + "15", borderRadius: 6, marginTop: 6 }}>
           <span style={{ color: C.green, fontWeight: 700 }}>TOTAL TTC</span>
           <span style={{ color: C.green, fontWeight: 800, fontSize: 18 }}>{fmtDec(calc.totalTTC)}</span>
         </div>
@@ -125,10 +126,10 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
               </div>
               {used.map(item => (
                 <div key={item.id} style={{ display: "flex", justifyContent: "space-between", padding: "4px 8px", fontSize: 12 }}>
-                  <span style={{ color: "#999" }}>
+                  <span style={{ color: C.muted }}>
                     {getQty(item)} {item.unit} × {item.label} <span style={{ color: C.dim }}>(mat {getMat(item)}€ + mo {getMo(item)}€)</span>
                   </span>
-                  <span style={{ fontWeight: 600, color: "#ccc" }}>{fmt(itemTotal(item))}</span>
+                  <span style={{ fontWeight: 600, color: C.text }}>{fmt(itemTotal(item))}</span>
                 </div>
               ))}
             </div>
@@ -142,7 +143,7 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
           <h3 style={{ color: C.gold, margin: "0 0 14px", fontSize: 14 }}>Fiscalité LMNP</h3>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             {/* Micro-BIC */}
-            <div style={{ flex: "1 1 200px", background: fiscalite.regime === "micro" ? "#0a1a0d" : "#08080f", border: fiscalite.regime === "micro" ? `1px solid ${C.green}44` : `1px solid ${C.cardBorder}`, borderRadius: 8, padding: 14 }}>
+            <div style={{ flex: "1 1 200px", background: fiscalite.regime === "micro" ? C.green + "15" : C.surface, border: fiscalite.regime === "micro" ? `1px solid ${C.green}44` : `1px solid ${C.cardBorder}`, borderRadius: 8, padding: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Micro-BIC</span>
                 {fiscalite.regime === "micro" && <span style={{ fontSize: 10, background: C.green + "22", color: C.green, padding: "2px 8px", borderRadius: 4, fontWeight: 700 }}>Recommandé</span>}
@@ -152,7 +153,7 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
               <div style={{ fontSize: 16, fontWeight: 800, color: C.text, marginTop: 8 }}>Imposable : {fmt(fiscalite.microBIC.revenuImposable)}/an</div>
             </div>
             {/* Réel */}
-            <div style={{ flex: "1 1 200px", background: fiscalite.regime === "reel" ? "#0a1a0d" : "#08080f", border: fiscalite.regime === "reel" ? `1px solid ${C.green}44` : `1px solid ${C.cardBorder}`, borderRadius: 8, padding: 14 }}>
+            <div style={{ flex: "1 1 200px", background: fiscalite.regime === "reel" ? C.green + "15" : C.surface, border: fiscalite.regime === "reel" ? `1px solid ${C.green}44` : `1px solid ${C.cardBorder}`, borderRadius: 8, padding: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Réel LMNP</span>
                 {fiscalite.regime === "reel" && <span style={{ fontSize: 10, background: C.green + "22", color: C.green, padding: "2px 8px", borderRadius: 4, fontWeight: 700 }}>Recommandé</span>}
@@ -166,7 +167,7 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
             </div>
           </div>
           {fiscalite.avantageReel !== 0 && (
-            <div style={{ textAlign: "center", marginTop: 12, padding: 10, background: "#08080f", borderRadius: 8 }}>
+            <div style={{ textAlign: "center", marginTop: 12, padding: 10, background: C.surface, borderRadius: 8 }}>
               <span style={{ fontSize: 13, color: C.green, fontWeight: 700 }}>
                 Économie en {fiscalite.regime === "reel" ? "réel" : "micro-BIC"} : {fmt(Math.abs(fiscalite.avantageReel))}/an d&apos;assiette imposable
               </span>
@@ -192,7 +193,7 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
         <button onClick={() => setShowExport(!showExport)} style={{ flex: 1, padding: 14, background: `linear-gradient(135deg,${C.gold},#8b6b3d)`, border: "none", borderRadius: 10, color: "#fff", cursor: "pointer", fontSize: 15, fontWeight: 700 }}>
           {showExport ? "Masquer" : "Exporter récapitulatif"}
         </button>
-        <button onClick={() => window.print()} style={{ padding: "14px 20px", background: "#1a1a2e", border: `1px solid ${C.cardBorder}`, borderRadius: 10, color: C.muted, cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
+        <button onClick={() => window.print()} style={{ padding: "14px 20px", background: C.btnBg, border: `1px solid ${C.cardBorder}`, borderRadius: 10, color: C.muted, cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
           Imprimer / PDF
         </button>
       </div>
@@ -224,7 +225,7 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
             t += `\nFISCALITÉ LMNP\n  Micro-BIC: ${fmt(fiscalite.microBIC.revenuImposable)} imposable\n  Réel: ${fmt(fiscalite.reel.revenuImposable)} imposable\n  → ${fiscalite.regime === "reel" ? "Réel" : "Micro-BIC"} recommandé\n`;
           }
           return t;
-        })()} onClick={e => e.target.select()} style={{ width: "100%", minHeight: 400, background: "#08080f", border: `1px solid ${C.cardBorder}`, borderRadius: 8, color: "#999", padding: 14, fontSize: 11, fontFamily: "monospace", resize: "vertical", boxSizing: "border-box", marginTop: 12 }} />
+        })()} onClick={e => e.target.select()} style={{ width: "100%", minHeight: 400, background: C.surface, border: `1px solid ${C.cardBorder}`, borderRadius: 8, color: C.muted, padding: 14, fontSize: 11, fontFamily: "monospace", resize: "vertical", boxSizing: "border-box", marginTop: 12 }} />
       )}
     </>
   );

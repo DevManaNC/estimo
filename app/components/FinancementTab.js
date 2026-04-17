@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { C, si } from "../styles";
+import { useTheme } from "../lib/ThemeContext";
 import { fmt } from "../utils/format";
 
 export default function FinancementTab({ current, calc, fin, cashFlow, updateInfo }) {
+  const { C, si } = useTheme();
   const [showAmort, setShowAmort] = useState(false);
   const info = current.info;
 
-  // Build amortization table
   const amortTable = [];
   if (fin.emprunt > 0 && fin.nbMois > 0) {
     const tauxMensuel = fin.tauxAnnuel / 12;
@@ -56,7 +56,7 @@ export default function FinancementTab({ current, calc, fin, cashFlow, updateInf
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 16, marginTop: 16, padding: 14, background: "#08080f", borderRadius: 8, flexWrap: "wrap", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", gap: 16, marginTop: 16, padding: 14, background: C.surface, borderRadius: 8, flexWrap: "wrap", justifyContent: "space-between" }}>
           <div><div style={si.label}>Montant total</div><div style={{ fontSize: 16, fontWeight: 700 }}>{fmt(calc.montantTotal)}</div></div>
           <div><div style={si.label}>Apport</div><div style={{ fontSize: 16, fontWeight: 700, color: C.gold }}>{fmt(fin.apportEur)}</div></div>
           <div><div style={si.label}>Emprunt</div><div style={{ fontSize: 20, fontWeight: 800, color: C.blue }}>{fmt(fin.emprunt)}</div></div>
@@ -74,14 +74,14 @@ export default function FinancementTab({ current, calc, fin, cashFlow, updateInf
       <div style={si.card}><div style={{ padding: 16 }}>
         <h3 style={{ color: C.gold, margin: "0 0 14px", fontSize: 15, fontWeight: 700 }}>Cash-flow mensuel</h3>
 
-        <div style={{ background: "#08080f", borderRadius: 8, padding: 14 }}>
+        <div style={{ background: C.surface, borderRadius: 8, padding: 14 }}>
           {[
             { label: "Loyer effectif (après vacance)", value: cashFlow.loyerEffectifMensuel, color: C.green, sign: "+" },
             { label: "Mensualité crédit", value: fin.mensualite, color: C.red, sign: "-" },
             { label: "Charges (foncier, PNO, copro, GLI)", value: cashFlow.chargesMensuelles, color: C.red, sign: "-" },
             { label: "Frais de gestion", value: cashFlow.gestionMensuelle, color: C.red, sign: "-" },
           ].map((row, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < 3 ? "1px solid #1a1a2e" : "none" }}>
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < 3 ? `1px solid ${C.cardBorder}` : "none" }}>
               <span style={{ fontSize: 13, color: C.muted }}>{row.label}</span>
               <span style={{ fontSize: 13, fontWeight: 700, color: row.color }}>{row.sign} {fmt(row.value)}</span>
             </div>
@@ -106,7 +106,7 @@ export default function FinancementTab({ current, calc, fin, cashFlow, updateInf
         <div style={si.card}><div style={{ padding: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <h3 style={{ color: C.gold, margin: 0, fontSize: 14, fontWeight: 700 }}>Tableau d&apos;amortissement</h3>
-            <button onClick={() => setShowAmort(!showAmort)} style={si.btn("#1a1a2e", C.muted)}>
+            <button onClick={() => setShowAmort(!showAmort)} style={si.btn(C.btnBg, C.muted)}>
               {showAmort ? "Masquer" : "Afficher"}
             </button>
           </div>
@@ -123,7 +123,7 @@ export default function FinancementTab({ current, calc, fin, cashFlow, updateInf
                 </thead>
                 <tbody>
                   {amortTable.map(r => (
-                    <tr key={r.a} style={{ borderBottom: "1px solid #0e0e1a" }}>
+                    <tr key={r.a} style={{ borderBottom: `1px solid ${C.card}` }}>
                       <td style={{ padding: "6px", textAlign: "right", color: C.muted }}>{r.a}</td>
                       <td style={{ padding: "6px", textAlign: "right", color: C.green }}>{fmt(r.cap)}</td>
                       <td style={{ padding: "6px", textAlign: "right", color: C.red }}>{fmt(r.int)}</td>
