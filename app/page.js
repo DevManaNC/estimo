@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
+import { useTheme } from "./lib/ThemeContext";
 import App from "./App";
 import Paywall from "./components/Paywall";
 import LoginPage from "./auth/login/page";
 import WelcomeScreen from "./components/WelcomeScreen";
-import { C } from "./styles";
 
 function AuthGate() {
   const { user, profile, loading, hasAccess } = useAuth();
+  const { C } = useTheme();
   const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {

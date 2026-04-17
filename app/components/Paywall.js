@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useAuth } from "../lib/AuthContext";
-import { C, si } from "../styles";
+import { useTheme } from "../lib/ThemeContext";
 
 export default function Paywall() {
   const { profile, signOut, supabase } = useAuth();
+  const { C, si } = useTheme();
   const [loading, setLoading] = useState(false);
 
   const isExpiredTrial = profile?.subscription_status === "trialing" &&
@@ -45,7 +46,7 @@ export default function Paywall() {
             }
           </p>
 
-          <div style={{ ...si.card, padding: 20, marginBottom: 24, background: "#0a0a14" }}>
+          <div style={{ ...si.card, padding: 20, marginBottom: 24, background: C.surfaceAlt }}>
             <div style={{ fontSize: 32, fontWeight: 800, color: C.gold }}>20€<span style={{ fontSize: 14, fontWeight: 500, color: C.muted }}>/mois</span></div>
             <ul style={{ textAlign: "left", fontSize: 13, color: C.text, listStyle: "none", padding: 0, marginTop: 16 }}>
               {["Projets illimités", "Estimation par département", "Simulation crédit & cash-flow", "Fiscalité LMNP", "Export JSON"].map(f => (
