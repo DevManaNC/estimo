@@ -1,13 +1,29 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
 import App from "./App";
 import Paywall from "./components/Paywall";
 import LoginPage from "./auth/login/page";
+import WelcomeScreen from "./components/WelcomeScreen";
 import { C } from "./styles";
 
 function AuthGate() {
   const { user, profile, loading, hasAccess } = useAuth();
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    if (!user || !profile) return;
+    const key = `welcome_seen_${user.id}`;
+    if (!localStorage.getItem(key) && profile.subscription_status === "trialing") {
+      setShowWelcome(true);
+    }
+  }, [user, profile]);
+
+  function handleWelcomeContinue() {
+    localStorage.setItem(`welcome_seen_${user.id}`, "1");
+    setShowWelcome(false);
+  }
 
   if (loading) {
     return (
@@ -27,6 +43,10 @@ function AuthGate() {
 
   if (!hasAccess()) {
     return <Paywall />;
+  }
+
+  if (showWelcome) {
+    return <WelcomeScreen onContinue={handleWelcomeContinue} />;
   }
 
   return <App />;
