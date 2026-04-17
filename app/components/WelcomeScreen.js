@@ -27,7 +27,7 @@ export default function WelcomeScreen({ onContinue }) {
             Bienvenue sur Estimo !
           </h2>
           <p style={{ fontSize: 14, color: C.muted, marginBottom: 28, lineHeight: 1.6 }}>
-            Votre compte est créé. Profitez de <strong style={{ color: C.gold }}>7 jours d'essai gratuit</strong> pour explorer toutes les fonctionnalités.
+            Votre compte est créé. Profitez de <strong style={{ color: C.gold }}>7 jours d&apos;essai gratuit</strong> pour explorer toutes les fonctionnalités.
           </p>
 
           <div style={{ ...si.card, padding: 20, marginBottom: 28, background: "#0a0a14" }}>
