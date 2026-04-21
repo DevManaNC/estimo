@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTheme } from "../lib/ThemeContext";
 import { ETAPES } from "../data/pricing";
+import { getMultiplier, getDepartment } from "../data/regions";
 import { fmt, fmtDec, genId } from "../utils/format";
 
 export default function TravauxTab({ current, calc, setQty, setMatC, setMoC, addCustomItem, removeCustomItem, setNote }) {
@@ -12,8 +13,13 @@ export default function TravauxTab({ current, calc, setQty, setMatC, setMoC, add
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItem, setNewItem] = useState({ label: "", unit: "u", mat: 0, mo: 0, desc: "" });
 
-  const getMat = (item) => current?.customMat[item.id] !== undefined && current.customMat[item.id] !== "" ? Number(current.customMat[item.id]) : item.mat;
-  const getMo = (item) => current?.customMo[item.id] !== undefined && current.customMo[item.id] !== "" ? Number(current.customMo[item.id]) : item.mo;
+  const mult = getMultiplier(current?.info?.cp);
+  const dept = getDepartment(current?.info?.cp);
+  // Custom items are user-entered prices — never multiplied by the regional coefficient.
+  const regionalMat = (item) => item.id.startsWith("custom_") ? Number(item.mat) || 0 : Math.round((Number(item.mat) || 0) * mult * 100) / 100;
+  const regionalMo = (item) => item.id.startsWith("custom_") ? Number(item.mo) || 0 : Math.round((Number(item.mo) || 0) * mult * 100) / 100;
+  const getMat = (item) => current?.customMat[item.id] !== undefined && current.customMat[item.id] !== "" ? Number(current.customMat[item.id]) : regionalMat(item);
+  const getMo = (item) => current?.customMo[item.id] !== undefined && current.customMo[item.id] !== "" ? Number(current.customMo[item.id]) : regionalMo(item);
   const getQty = (item) => current?.quantities[item.id] || 0;
   const itemTotal = (item) => getQty(item) * (getMat(item) + getMo(item));
 
@@ -51,6 +57,13 @@ export default function TravauxTab({ current, calc, setQty, setMatC, setMoC, add
           </button>
         ))}
       </div>
+
+      {/* Regional coefficient hint */}
+      {dept && mult !== 1 && (
+        <div style={{ fontSize: 11, color: C.muted, padding: "6px 10px", background: C.surfaceAlt, borderRadius: 6, marginBottom: 8, lineHeight: 1.4 }}>
+          Prix de base ajustés pour <b style={{ color: C.text }}>{dept.name} ({dept.code})</b> — coeff. <b style={{ color: C.gold }}>{mult.toFixed(2)}</b>. Les placeholders affichent déjà le prix régional ; saisir une valeur la remplace.
+        </div>
+      )}
 
       {/* Total TTC banner */}
       <div style={{ display: "flex", alignItems: "center", marginBottom: 12, padding: "8px 12px", background: C.surfaceAlt, borderRadius: 8, justifyContent: "space-between" }}>
@@ -120,10 +133,10 @@ export default function TravauxTab({ current, calc, setQty, setMatC, setMoC, add
                 </div>
                 <div style={{ width: 30, fontSize: 10, color: C.dim, textAlign: "center" }}>{item.unit}</div>
                 <div style={{ width: 70 }}>
-                  <input type="text" inputMode="decimal" min={0} style={si.inputSm} value={current.customMat[item.id] ?? ""} onChange={e => setMatC(item.id, e.target.value)} placeholder={String(item.mat)} />
+                  <input type="text" inputMode="decimal" min={0} style={si.inputSm} value={current.customMat[item.id] ?? ""} onChange={e => setMatC(item.id, e.target.value)} placeholder={String(regionalMat(item))} title={mult !== 1 && !item.id.startsWith("custom_") ? `Base ${item.mat}€ × coeff ${mult.toFixed(2)}` : undefined} />
                 </div>
                 <div style={{ width: 70 }}>
-                  <input type="text" inputMode="decimal" min={0} style={si.inputSm} value={current.customMo[item.id] ?? ""} onChange={e => setMoC(item.id, e.target.value)} placeholder={String(item.mo)} />
+                  <input type="text" inputMode="decimal" min={0} style={si.inputSm} value={current.customMo[item.id] ?? ""} onChange={e => setMoC(item.id, e.target.value)} placeholder={String(regionalMo(item))} title={mult !== 1 && !item.id.startsWith("custom_") ? `Base ${item.mo}€ × coeff ${mult.toFixed(2)}` : undefined} />
                 </div>
                 <div style={{ width: 80, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: tot > 0 ? C.text : C.dim }}>{tot > 0 ? fmt(tot) : "—"}</span>

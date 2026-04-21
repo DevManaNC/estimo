@@ -2,17 +2,20 @@
 
 import { useState } from "react";
 import { useTheme } from "../lib/ThemeContext";
-import { ETAPES } from "../data/pricing";
-import { LOT_TYPES } from "../data/pricing";
+import { ETAPES, LOT_TYPES, RENTAL_MODES } from "../data/pricing";
+import { getMultiplier } from "../data/regions";
 import { fmt, fmtDec } from "../utils/format";
 
-export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite }) {
+export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite, tri, updateInfo }) {
   const { C, si } = useTheme();
   const [showExport, setShowExport] = useState(false);
   const info = current.info;
+  const mult = getMultiplier(info.cp);
 
-  const getMat = (item) => current?.customMat[item.id] !== undefined && current.customMat[item.id] !== "" ? Number(current.customMat[item.id]) : item.mat;
-  const getMo = (item) => current?.customMo[item.id] !== undefined && current.customMo[item.id] !== "" ? Number(current.customMo[item.id]) : item.mo;
+  const regionalMat = (item) => item.id.startsWith("custom_") ? Number(item.mat) || 0 : Math.round((Number(item.mat) || 0) * mult * 100) / 100;
+  const regionalMo = (item) => item.id.startsWith("custom_") ? Number(item.mo) || 0 : Math.round((Number(item.mo) || 0) * mult * 100) / 100;
+  const getMat = (item) => current?.customMat[item.id] !== undefined && current.customMat[item.id] !== "" ? Number(current.customMat[item.id]) : regionalMat(item);
+  const getMo = (item) => current?.customMo[item.id] !== undefined && current.customMo[item.id] !== "" ? Number(current.customMo[item.id]) : regionalMo(item);
   const getQty = (item) => current?.quantities[item.id] || 0;
   const itemTotal = (item) => getQty(item) * (getMat(item) + getMo(item));
 
@@ -47,8 +50,50 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 10, marginTop: 2 }}>
           <MetricCard label="Mensualité crédit" value={fmt(fin.mensualite)} color={C.blue} sub={`${fin.duree} ans à ${(fin.tauxAnnuel * 100).toFixed(1)}%`} />
           <MetricCard label="Cash-flow /mois" value={`${cashFlow.cashFlowAvantImpot >= 0 ? "+" : ""}${fmt(cashFlow.cashFlowAvantImpot)}`} color={cashFlow.cashFlowAvantImpot >= 0 ? C.green : C.red} />
-          <MetricCard label="Cash-on-Cash" value={cashFlow.cashOnCash.toFixed(2) + "%"} color={cashFlow.cashOnCash >= 10 ? C.green : cashFlow.cashOnCash >= 5 ? "#f1c40f" : C.red} sub={`Apport: ${fmt(fin.apportEur)}`} />
+          <MetricCard label="Cash-on-Cash" value={cashFlow.cashOnCash.toFixed(2) + "%"} color={cashFlow.cashOnCash >= 10 ? C.green : cashFlow.cashOnCash >= 5 ? "#f1c40f" : C.red} sub={`Cash-flow annuel / apport (${fmt(fin.apportEur)})`} />
         </div>
+      )}
+
+      {/* TRI — Taux de Rendement Interne */}
+      {tri && (
+        <div style={si.card}><div style={{ padding: 16 }}>
+          <h3 style={{ color: C.gold, margin: "0 0 10px", fontSize: 14 }}>TRI — Taux de Rendement Interne</h3>
+          <div style={{ fontSize: 11, color: C.dim, marginBottom: 12, lineHeight: 1.5 }}>
+            Rendement complet incluant apport, cash-flows annuels, remboursement du capital et plus-value à la revente.
+            Plus complet que la rentabilité nette ou le Cash-on-Cash.
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+            <div style={{ flex: "1 1 140px" }}>
+              <div style={si.label}>Durée de détention (ans)</div>
+              <input type="text" inputMode="decimal" style={si.input} value={info.dureeDetention ?? 15} onChange={e => updateInfo("dureeDetention", +e.target.value || 0)} />
+            </div>
+            <div style={{ flex: "1 1 140px" }}>
+              <div style={si.label}>Appréciation annuelle (%)</div>
+              <input type="text" inputMode="decimal" style={si.input} value={info.appreciationAnnuelle ?? 2} onChange={e => updateInfo("appreciationAnnuelle", +e.target.value || 0)} />
+              <div style={{ fontSize: 10, color: C.dim, marginTop: 2 }}>Inflation du prix du bien par an</div>
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}>
+            <div style={{ padding: 12, background: C.surface, borderRadius: 8 }}>
+              <div style={si.label}>TRI sur {tri.duree} ans</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: tri.tri === null ? C.dim : tri.tri >= 8 ? C.green : tri.tri >= 4 ? "#f1c40f" : C.red, marginTop: 4 }}>
+                {tri.tri === null ? "—" : tri.tri.toFixed(2) + "%"}
+              </div>
+            </div>
+            <div style={{ padding: 12, background: C.surface, borderRadius: 8 }}>
+              <div style={si.label}>Revente estimée</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.text, marginTop: 4 }}>{fmt(tri.valeurReventeEstimee)}</div>
+            </div>
+            <div style={{ padding: 12, background: C.surface, borderRadius: 8 }}>
+              <div style={si.label}>Capital restant dû</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.text, marginTop: 4 }}>{fmt(tri.capitalRestant)}</div>
+            </div>
+            <div style={{ padding: 12, background: C.surface, borderRadius: 8 }}>
+              <div style={si.label}>Valeur nette à terme</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.gold, marginTop: 4 }}>{fmt(tri.valeurTerminaleNette)}</div>
+            </div>
+          </div>
+        </div></div>
       )}
 
       {/* Bar chart - répartition par étape */}
@@ -137,42 +182,119 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
         })}
       </div></div>
 
-      {/* Fiscalité LMNP */}
-      {fiscalite && (
+      {/* Fiscalité BIC (meublé) */}
+      {fiscalite?.bic && (
         <div style={si.card}><div style={{ padding: 16 }}>
-          <h3 style={{ color: C.gold, margin: "0 0 14px", fontSize: 14 }}>Fiscalité LMNP</h3>
+          <h3 style={{ color: C.gold, margin: "0 0 14px", fontSize: 14 }}>Fiscalité BIC (meublé LLD/LCD)</h3>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            {/* Micro-BIC */}
-            <div style={{ flex: "1 1 200px", background: fiscalite.regime === "micro" ? C.green + "15" : C.surface, border: fiscalite.regime === "micro" ? `1px solid ${C.green}44` : `1px solid ${C.cardBorder}`, borderRadius: 8, padding: 14 }}>
+            <div style={{ flex: "1 1 200px", background: fiscalite.bic.regime === "micro" ? C.green + "15" : C.surface, border: fiscalite.bic.regime === "micro" ? `1px solid ${C.green}44` : `1px solid ${C.cardBorder}`, borderRadius: 8, padding: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Micro-BIC</span>
-                {fiscalite.regime === "micro" && <span style={{ fontSize: 10, background: C.green + "22", color: C.green, padding: "2px 8px", borderRadius: 4, fontWeight: 700 }}>Recommandé</span>}
+                {fiscalite.bic.regime === "micro" && <span style={{ fontSize: 10, background: C.green + "22", color: C.green, padding: "2px 8px", borderRadius: 4, fontWeight: 700 }}>Recommandé</span>}
               </div>
-              <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Loyer brut : {fmt(fiscalite.loyerAnnuel)}</div>
-              <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Abattement : -50%</div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: C.text, marginTop: 8 }}>Imposable : {fmt(fiscalite.microBIC.revenuImposable)}/an</div>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Loyer brut : {fmt(fiscalite.bic.loyerAnnuel)}</div>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Abattement : -{fiscalite.bic.microBIC.abattement}%</div>
+              <div style={{ fontSize: 10, color: C.dim, marginBottom: 4 }}>{fiscalite.bic.microBIC.note}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.text, marginTop: 8 }}>Imposable : {fmt(fiscalite.bic.microBIC.revenuImposable)}/an</div>
             </div>
-            {/* Réel */}
-            <div style={{ flex: "1 1 200px", background: fiscalite.regime === "reel" ? C.green + "15" : C.surface, border: fiscalite.regime === "reel" ? `1px solid ${C.green}44` : `1px solid ${C.cardBorder}`, borderRadius: 8, padding: 14 }}>
+            <div style={{ flex: "1 1 200px", background: fiscalite.bic.regime === "reel" ? C.green + "15" : C.surface, border: fiscalite.bic.regime === "reel" ? `1px solid ${C.green}44` : `1px solid ${C.cardBorder}`, borderRadius: 8, padding: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Réel LMNP</span>
-                {fiscalite.regime === "reel" && <span style={{ fontSize: 10, background: C.green + "22", color: C.green, padding: "2px 8px", borderRadius: 4, fontWeight: 700 }}>Recommandé</span>}
+                {fiscalite.bic.regime === "reel" && <span style={{ fontSize: 10, background: C.green + "22", color: C.green, padding: "2px 8px", borderRadius: 4, fontWeight: 700 }}>Recommandé</span>}
               </div>
-              <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Charges déductibles : {fmt(fiscalite.reel.chargesDeductibles)}</div>
-              <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Intérêts d&apos;emprunt : {fmt(fiscalite.reel.interetsAnnuels)}/an</div>
-              <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Amort. immobilier : {fmt(fiscalite.reel.amortissementImmo)}/an</div>
-              <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Amort. travaux : {fmt(fiscalite.reel.amortissementTravaux)}/an</div>
-              <div style={{ fontSize: 11, color: C.dim, marginBottom: 4, borderTop: `1px solid ${C.cardBorder}`, paddingTop: 4, marginTop: 4 }}>Total déductions : {fmt(fiscalite.reel.totalDeductions)}</div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: C.text, marginTop: 4 }}>Imposable : {fmt(fiscalite.reel.revenuImposable)}/an</div>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Charges : {fmt(fiscalite.bic.reel.chargesDeductibles)}</div>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Intérêts : {fmt(fiscalite.bic.reel.interetsAnnuels)}/an</div>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Amort. immo : {fmt(fiscalite.bic.reel.amortissementImmo)}/an</div>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Amort. travaux : {fmt(fiscalite.bic.reel.amortissementTravaux)}/an</div>
+              <div style={{ fontSize: 11, color: C.dim, marginBottom: 4, borderTop: `1px solid ${C.cardBorder}`, paddingTop: 4, marginTop: 4 }}>Total déductions : {fmt(fiscalite.bic.reel.totalDeductions)}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.text, marginTop: 4 }}>Imposable : {fmt(fiscalite.bic.reel.revenuImposable)}/an</div>
             </div>
           </div>
-          {fiscalite.avantageReel !== 0 && (
-            <div style={{ textAlign: "center", marginTop: 12, padding: 10, background: C.surface, borderRadius: 8 }}>
-              <span style={{ fontSize: 13, color: C.green, fontWeight: 700 }}>
-                Économie en {fiscalite.regime === "reel" ? "réel" : "micro-BIC"} : {fmt(Math.abs(fiscalite.avantageReel))}/an d&apos;assiette imposable
-              </span>
+        </div></div>
+      )}
+
+      {/* Fiscalité Foncier (nu) */}
+      {fiscalite?.foncier && (
+        <div style={si.card}><div style={{ padding: 16 }}>
+          <h3 style={{ color: C.gold, margin: "0 0 14px", fontSize: 14 }}>Fiscalité Foncier (location nue)</h3>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ flex: "1 1 200px", background: fiscalite.foncier.regime === "micro" ? C.green + "15" : C.surface, border: fiscalite.foncier.regime === "micro" ? `1px solid ${C.green}44` : `1px solid ${C.cardBorder}`, borderRadius: 8, padding: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Micro-foncier</span>
+                {fiscalite.foncier.regime === "micro" && <span style={{ fontSize: 10, background: C.green + "22", color: C.green, padding: "2px 8px", borderRadius: 4, fontWeight: 700 }}>Recommandé</span>}
+              </div>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Loyer brut : {fmt(fiscalite.foncier.loyerAnnuel)}</div>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Abattement : -30%</div>
+              <div style={{ fontSize: 10, color: C.dim, marginBottom: 4 }}>{fiscalite.foncier.microFoncier.note}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.text, marginTop: 8 }}>Imposable : {fmt(fiscalite.foncier.microFoncier.revenuImposable)}/an</div>
+            </div>
+            <div style={{ flex: "1 1 200px", background: fiscalite.foncier.regime === "reel" ? C.green + "15" : C.surface, border: fiscalite.foncier.regime === "reel" ? `1px solid ${C.green}44` : `1px solid ${C.cardBorder}`, borderRadius: 8, padding: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Réel foncier</span>
+                {fiscalite.foncier.regime === "reel" && <span style={{ fontSize: 10, background: C.green + "22", color: C.green, padding: "2px 8px", borderRadius: 4, fontWeight: 700 }}>Recommandé</span>}
+              </div>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Charges : {fmt(fiscalite.foncier.reel.chargesDeductibles)}</div>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Intérêts : {fmt(fiscalite.foncier.reel.interetsAnnuels)}/an</div>
+              <div style={{ fontSize: 11, color: C.dim, marginBottom: 4, borderTop: `1px solid ${C.cardBorder}`, paddingTop: 4, marginTop: 4 }}>Total déductions : {fmt(fiscalite.foncier.reel.totalDeductions)}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.text, marginTop: 4 }}>Imposable : {fmt(fiscalite.foncier.reel.revenuImposable)}/an</div>
+              {fiscalite.foncier.reel.deficitImputableRevenuGlobal > 0 && (
+                <div style={{ marginTop: 8, padding: 8, background: C.blue + "15", border: `1px solid ${C.blue}33`, borderRadius: 6, fontSize: 11, color: C.blue, fontWeight: 600 }}>
+                  Déficit foncier imputable : {fmt(fiscalite.foncier.reel.deficitImputableRevenuGlobal)} sur revenu global
+                </div>
+              )}
+            </div>
+          </div>
+        </div></div>
+      )}
+
+      {/* Réductions d'impôt */}
+      {fiscalite && (fiscalite.denormandie || fiscalite.locAvantages) && (
+        <div style={si.card}><div style={{ padding: 16 }}>
+          <h3 style={{ color: C.gold, margin: "0 0 14px", fontSize: 14 }}>Réductions d&apos;impôt</h3>
+          {fiscalite.denormandie && (
+            <div style={{ padding: 12, background: fiscalite.denormandie.eligible ? C.green + "12" : C.red + "12", border: `1px solid ${fiscalite.denormandie.eligible ? C.green : C.red}33`, borderRadius: 8, marginBottom: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Denormandie — {fiscalite.denormandie.taux}% sur {fiscalite.denormandie.duree} ans</span>
+                {!fiscalite.denormandie.eligible && <span style={{ fontSize: 10, color: C.red, fontWeight: 700 }}>Travaux {(fiscalite.denormandie.travauxRatio * 100).toFixed(0)}% &lt; 25%</span>}
+              </div>
+              {fiscalite.denormandie.eligible && (
+                <>
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>Réduction totale : {fmt(fiscalite.denormandie.reductionTotale)}</div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: C.green, marginTop: 4 }}>{fmt(fiscalite.denormandie.reductionAnnuelle)} /an</div>
+                </>
+              )}
             </div>
           )}
+          {fiscalite.locAvantages && (
+            <div style={{ padding: 12, background: C.green + "12", border: `1px solid ${C.green}33`, borderRadius: 8 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Loc&apos;Avantages {fiscalite.locAvantages.niveau.toUpperCase()} — {fiscalite.locAvantages.taux}% du loyer net</div>
+              <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>Loyer net de charges : {fmt(fiscalite.locAvantages.loyerNet)}/an</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: C.green, marginTop: 4 }}>{fmt(fiscalite.locAvantages.reductionAnnuelle)} /an</div>
+            </div>
+          )}
+        </div></div>
+      )}
+
+      {/* Impôt estimé */}
+      {fiscalite && fiscalite.tmi > 0 && (
+        <div style={si.card}><div style={{ padding: 16 }}>
+          <h3 style={{ color: C.gold, margin: "0 0 10px", fontSize: 14 }}>Impôt estimé annuel</h3>
+          <div style={{ fontSize: 11, color: C.dim, marginBottom: 10 }}>Basé sur TMI {fiscalite.tmi}% + prélèvements sociaux 17,2% sur le régime recommandé</div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: C.muted, marginBottom: 4 }}>
+            <span>Impôt sur le revenu</span><span>{fmt(fiscalite.impotIR)}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: C.muted, marginBottom: 4 }}>
+            <span>Prélèvements sociaux</span><span>{fmt(fiscalite.impotPS)}</span>
+          </div>
+          {fiscalite.reductionsTotales > 0 && (
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: C.green, marginBottom: 4 }}>
+              <span>− Réductions (Denormandie, Loc&apos;Avantages)</span><span>−{fmt(fiscalite.reductionsTotales)}</span>
+            </div>
+          )}
+          <div style={{ display: "flex", justifyContent: "space-between", borderTop: `1px solid ${C.cardBorder}`, paddingTop: 8, marginTop: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Impôt final</span>
+            <span style={{ fontSize: 18, fontWeight: 800, color: fiscalite.impotFinal > 0 ? C.red : C.green }}>{fmt(fiscalite.impotFinal)}</span>
+          </div>
         </div></div>
       )}
 
@@ -211,12 +333,14 @@ export default function SyntheseTab({ current, calc, fin, cashFlow, fiscalite })
           t += `\n  TOTAL TTC: ${fmtDec(calc.totalTTC)}\n\nLOTS\n`;
           current.lots.forEach(l => {
             const tp = LOT_TYPES.find(x => x.value === l.type);
-            t += `  ${l.qty}× ${tp?.label} — ${fmt(l.loyer)}/mois ${l.meuble ? "meublé" : "nu"}\n`;
+            const mode = l.mode || (l.meuble ? "lld" : "nu");
+            const modeLabel = RENTAL_MODES.find(m => m.value === mode)?.label || mode;
+            t += `  ${l.qty}× ${tp?.label} — ${fmt(l.loyer)}/mois (${modeLabel})\n`;
           });
           t += `  → Mensuel: ${fmt(calc.loyerMensuel)} | Annuel: ${fmt(calc.loyerAnnuel)}\n`;
           t += `  → Effectif (vacance ${info.tauxVacance || 0}%): ${fmt(calc.loyerEffectif)}/an\n`;
           t += `\nCHARGES ANNUELLES: ${fmt(calc.chargesAn)}\n`;
-          t += `  Foncière: ${fmt(info.taxeFonciere || 0)} | PNO: ${fmt(info.assurancePNO || 0)} | Copro: ${fmt(info.chargesCopro || 0)} | GLI: ${fmt(info.assuranceGLI || 0)} | Gestion: ${fmt(calc.fraisGestionEur)}\n`;
+          t += `  Foncière: ${fmt(info.taxeFonciere || 0)} | PNO: ${fmt(info.assurancePNO || 0)}${calc.isCopro ? ` | Copro: ${fmt(calc.chargesCopro)}${calc.fondsTravauxCopro ? ` | Fonds trav.: ${fmt(calc.fondsTravauxCopro)}` : ""}` : ""} | GLI: ${fmt(info.assuranceGLI || 0)} | Gestion: ${fmt(calc.fraisGestionEur)}\n`;
           if (fin && fin.mensualite > 0) {
             t += `\nFINANCEMENT\n  Apport: ${fmt(fin.apportEur)} (${fin.apportPct}%) | Emprunt: ${fmt(fin.emprunt)}\n  Mensualité: ${fmt(fin.mensualite)} sur ${fin.duree} ans à ${(fin.tauxAnnuel * 100).toFixed(1)}%\n  Intérêts: ${fmt(fin.interets)}\n  Cash-flow: ${cashFlow.cashFlowAvantImpot >= 0 ? "+" : ""}${fmt(cashFlow.cashFlowAvantImpot)}/mois\n`;
           }
