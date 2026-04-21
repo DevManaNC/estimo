@@ -136,6 +136,8 @@ export const ETAPES = [
   },
 ];
 
+// r = loyer nu de référence (Hérault 2024-2025)
+// Coefficients indicatifs: meublé LLD ≈ +15%, LCD (équivalent mensuel net Airbnb) ≈ ×1,8
 export const LOT_TYPES = [
   { value: "studio", label: "Studio", r: 350 },
   { value: "t1", label: "T1", r: 380 },
@@ -148,3 +150,15 @@ export const LOT_TYPES = [
   { value: "local", label: "Local commercial", r: 500 },
   { value: "garage", label: "Garage", r: 80 },
 ];
+
+export const RENTAL_MODES = [
+  { value: "nu", label: "LLD nu", desc: "Bail vide 3 ans — régime foncier", coef: 1.0 },
+  { value: "lld", label: "LLD meublé", desc: "Bail meublé 1 an — LMNP/BIC", coef: 1.15 },
+  { value: "lcd", label: "LCD (saisonnier)", desc: "Meublé tourisme — BIC", coef: 1.8 },
+];
+
+export function defaultLoyer(type, mode) {
+  const base = LOT_TYPES.find(t => t.value === type)?.r ?? 0;
+  const coef = RENTAL_MODES.find(m => m.value === mode)?.coef ?? 1;
+  return Math.round(base * coef);
+}

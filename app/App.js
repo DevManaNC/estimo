@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useTheme } from "./lib/ThemeContext";
 import { fmt } from "./utils/format";
 import { genId } from "./utils/format";
-import { calcProject, calcFinancement, calcCashFlow, calcFiscalite } from "./utils/calc";
+import { calcProject, calcFinancement, calcCashFlow, calcFiscalite, calcTRI } from "./utils/calc";
 import { useAuth } from "./lib/AuthContext";
 import { loadProjectsFromDB, saveProjectToDB, deleteProjectFromDB, migrateLocalProjects } from "./utils/supabase-storage";
 import Dashboard from "./components/Dashboard";
@@ -22,8 +22,14 @@ const EMPTY_PROJECT = () => ({
     adresse: "", ville: "", cp: "", surface: 0,
     prixVente: 0, negociation: 0, fraisNotaire: 8, fraisAgence: 0,
     taxeFonciere: 0, prixM2Renove: 2000, assurancePNO: 600,
-    chargesCopro: 0, fraisGestion: 7, tauxVacance: 5, assuranceGLI: 0,
+    ownership: "mono", chargesCopro: 0, fondsTravauxCopro: 0,
+    fraisGestion: 7, tauxVacance: 5, assuranceGLI: 0,
     apport: 20, tauxCredit: 3.5, dureeCredit: 20,
+    dureeDetention: 15, appreciationAnnuelle: 2,
+    denormandieEnabled: false, denormandieDuree: 9,
+    locAvantagesEnabled: false, locAvantagesNiveau: "loc1",
+    aidesTravaux: 0,
+    tmi: 30,
   },
   lots: [],
   quantities: {},
@@ -216,6 +222,7 @@ export default function App() {
   const fin = calcFinancement(current.info, calc.montantTotal);
   const cashFlow = calcCashFlow(current.info, calc, fin);
   const fiscalite = calcFiscalite(current.info, calc, fin);
+  const tri = calcTRI(current.info, calc, fin, cashFlow);
   const info = current.info;
 
   const tabs = [
@@ -282,7 +289,7 @@ export default function App() {
           <FinancementTab current={current} calc={calc} fin={fin} cashFlow={cashFlow} updateInfo={updateInfo} />
         )}
         {tab === "synthese" && (
-          <SyntheseTab current={current} calc={calc} fin={fin} cashFlow={cashFlow} fiscalite={fiscalite} />
+          <SyntheseTab current={current} calc={calc} fin={fin} cashFlow={cashFlow} fiscalite={fiscalite} tri={tri} updateInfo={updateInfo} />
         )}
       </div>
     </div>
